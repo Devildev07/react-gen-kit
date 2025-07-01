@@ -32,7 +32,12 @@ function createFiles({
     useCurrent,
     type
 }) {
-    const ext = useTypeScript ? 'tsx' : 'jsx';
+    let ext;
+    if (type.toLowerCase() === 'hook') {
+        ext = useTypeScript ? 'ts' : 'js';
+    } else {
+        ext = useTypeScript ? 'tsx' : 'jsx';
+    }
     const styleFile = useCSSModule
         ? `${componentName}.module.${styleExtension}`
         : `${componentName}.${styleExtension}`;
@@ -88,22 +93,37 @@ function createFiles({
         const hookName = componentName.startsWith('use') ? componentName : `use${componentName.charAt(0).toUpperCase()}${componentName.slice(1)}`;
         componentContent = `import { useState } from 'react';\n\nfunction ${hookName}() {\n  const [state, setState] = useState(null);\n  // Your hook logic here\n  return [state, setState];\n}\n\nexport default ${hookName};`;
     } else if (type.toLowerCase() === 'provider') {
-        const contextName = `${componentName}Context`;
-        const providerName = `${componentName}Provider`;
-        const hookName = `use${componentName.replace(/Provider$/, '')}`;
+    const baseName = componentName.replace(/Provider$/, '');
+    const contextName = `${baseName}Context`;
+    const providerName = `${baseName}Provider`;
+    const hookName = `use${baseName.charAt(0).toUpperCase()}${baseName.slice(1)}`;
 
-        componentContent =
-            `import React, { createContext, useContext, useState, ReactNode } from 'react';\n\n` +
-            `interface ${componentName}Value {\n  state: any;\n  setState: React.Dispatch<React.SetStateAction<any>>;\n}\n\n` +
-            `const ${contextName} = createContext<${componentName}Value | undefined>(undefined);\n\n` +
-            `export const ${providerName} = ({ children }: { children: ReactNode }) => {\n` +
-            `  const [state, setState] = useState(null);\n\n` +
-            `  return (\n    <${contextName}.Provider value={{ state, setState }}>\n      {children}\n    </${contextName}.Provider>\n  );\n};\n\n` +
-            `export const ${hookName} = () => {\n` +
-            `  const context = useContext(${contextName});\n` +
-            `  if (!context) {\n    throw new Error('${hookName} must be used within a ${providerName}');\n  }\n` +
-            `  return context;\n};`;
-    }
+    componentContent =
+        `import React, { createContext, useContext, useState } from 'react';\n\n` +
+        `interface ${baseName}Value<T = unknown> {\n` +
+        `  state: T;\n` +
+        `  setState: React.Dispatch<React.SetStateAction<T>>;\n` +
+        `}\n\n` +
+        `const ${contextName} = createContext<${baseName}Value | undefined>(undefined);\n\n` +
+        `interface ${providerName}Props {\n` +
+        `  children: React.ReactNode;\n` +
+        `}\n\n` +
+        `export const ${providerName}: React.FC<${providerName}Props> = ({ children }) => {\n` +
+        `  const [state, setState] = useState<unknown>(null);\n\n` +
+        `  return (\n` +
+        `    <${contextName}.Provider value={{ state, setState }}>\n` +
+        `      {children}\n` +
+        `    </${contextName}.Provider>\n` +
+        `  );\n` +
+        `};\n\n` +
+        `export const ${hookName} = () => {\n` +
+        `  const context = useContext(${contextName});\n` +
+        `  if (!context) {\n` +
+        `    throw new Error('${hookName} must be used within a ${providerName}');\n` +
+        `  }\n` +
+        `  return context;\n` +
+        `};`;
+}
 
     fs.writeFileSync(path.join(targetDir, `${componentName}.${ext}`), componentContent);
 
@@ -199,7 +219,7 @@ async function promptUser(cliOptions = {}) {
 // CLI entry point
 program
     .name('react-generate')
-    .description('Interactive generator for React components, pages, context, and providers')
+    .description('Interactive generator for React components, pages, hooks, and providers')
     .option('-p, --path <path>', 'Custom path to place the generated file(s)')
     .option('-c, --current', 'Use current directory (e.g., inside /src/components)')
     .action((options) => {
