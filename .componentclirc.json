@@ -1,0 +1,6 @@
+{
+  "useTypeScript": true,
+  "useCSSModule": true,
+  "createTest": true,
+  "styleExtension": "scss"
+}
