@@ -1,0 +1,30 @@
+{
+  "name": "react-gen-kit",
+  "version": "0.2.1",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "react-gen-kit",
+    "react-generator-kit",
+    "react-cli-kit",
+    "react-cli",
+    "reactjs-component-cli",
+    "reactjs",
+    "reactCli",
+    "react-js-cli"
+  ],
+  "author": "Dewanshu Singh",
+  "license": "ISC",
+  "description": "React component generator CLI",
+  "bin": {
+    "react-generate": "index.js"
+  },
+  "dependencies": {
+    "commander": "^14.0.0",
+    "inquirer": "^12.6.3"
+  }
+}
